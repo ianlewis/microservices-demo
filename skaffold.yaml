@@ -18,25 +18,25 @@ build:
   tagPolicy:
     gitCommit: {}
   artifacts:
-  - imageName: gcr.io/microservices-demo-app/emailservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/emailservice
     workspace: src/emailservice
-  - imageName: gcr.io/microservices-demo-app/productcatalogservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/productcatalogservice
     workspace: src/productcatalogservice
-  - imageName: gcr.io/microservices-demo-app/recommendationservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/recommendationservice
     workspace: src/recommendationservice
-  - imageName: gcr.io/microservices-demo-app/shippingservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/shippingservice
     workspace: src/shippingservice
-  - imageName: gcr.io/microservices-demo-app/checkoutservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/checkoutservice
     workspace: src/checkoutservice
-  - imageName: gcr.io/microservices-demo-app/paymentservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/paymentservice
     workspace: src/paymentservice
-  - imageName: gcr.io/microservices-demo-app/currencyservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/currencyservice
     workspace: src/currencyservice
-  - imageName: gcr.io/microservices-demo-app/cartservice
+  - imageName: asia.gcr.io/next-tokyo-store-demo/cartservice
     workspace: src/cartservice
-  - imageName: gcr.io/microservices-demo-app/frontend
+  - imageName: asia.gcr.io/next-tokyo-store-demo/frontend
     workspace: src/frontend
-  - imageName: gcr.io/microservices-demo-app/loadgenerator
+  - imageName: asia.gcr.io/next-tokyo-store-demo/loadgenerator
     workspace: src/loadgenerator
 deploy:
   kubectl:
