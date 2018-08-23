@@ -39,7 +39,7 @@ var (
 
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
-	log.WithField("currency", currentCurrency(r)).Info("home")
+	log.WithField("currency", fe.currentCurrency(r)).Info("home")
 	currencies, err := fe.getCurrencies(r.Context())
 	if err != nil {
 		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve currencies"), http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ps := make([]productView, len(products))
 	for i, p := range products {
-		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), currentCurrency(r))
+		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), fe.currentCurrency(r))
 		if err != nil {
 			renderHTTPError(log, r, w, errors.Wrapf(err, "failed to do currency conversion for product %s", p.GetId()), http.StatusInternalServerError)
 			return
@@ -73,8 +73,9 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := templates.ExecuteTemplate(w, "home", map[string]interface{}{
 		"session_id":    sessionID(r),
 		"request_id":    r.Context().Value(ctxKeyRequestID{}),
-		"user_currency": currentCurrency(r),
+		"user_currency": fe.currentCurrency(r),
 		"currencies":    currencies,
+		"store":         fe.store,
 		"products":      ps,
 		"cart_size":     len(cart),
 		"banner_color":  os.Getenv("BANNER_COLOR"), // illustrates canary deployments
@@ -90,7 +91,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		renderHTTPError(log, r, w, errors.New("product id not specified"), http.StatusBadRequest)
 		return
 	}
-	log.WithField("id", id).WithField("currency", currentCurrency(r)).
+	log.WithField("id", id).WithField("currency", fe.currentCurrency(r)).
 		Debug("serving product page")
 
 	p, err := fe.getProduct(r.Context(), id)
@@ -110,7 +111,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), currentCurrency(r))
+	price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), fe.currentCurrency(r))
 	if err != nil {
 		renderHTTPError(log, r, w, errors.Wrap(err, "failed to convert currency"), http.StatusInternalServerError)
 		return
@@ -130,8 +131,9 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 	if err := templates.ExecuteTemplate(w, "product", map[string]interface{}{
 		"session_id":      sessionID(r),
 		"request_id":      r.Context().Value(ctxKeyRequestID{}),
-		"user_currency":   currentCurrency(r),
+		"user_currency":   fe.currentCurrency(r),
 		"currencies":      currencies,
+		"store":           fe.store,
 		"product":         product,
 		"recommendations": recommendations,
 		"cart_size":       len(cart),
@@ -196,7 +198,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	shippingCost, err := fe.getShippingQuote(r.Context(), cart, currentCurrency(r))
+	shippingCost, err := fe.getShippingQuote(r.Context(), cart, fe.currentCurrency(r))
 	if err != nil {
 		renderHTTPError(log, r, w, errors.Wrap(err, "failed to get shipping quote"), http.StatusInternalServerError)
 		return
@@ -208,14 +210,14 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		Price    *pb.Money
 	}
 	items := make([]cartItemView, len(cart))
-	totalPrice := pb.Money{CurrencyCode: currentCurrency(r)}
+	totalPrice := pb.Money{CurrencyCode: fe.currentCurrency(r)}
 	for i, item := range cart {
 		p, err := fe.getProduct(r.Context(), item.GetProductId())
 		if err != nil {
 			renderHTTPError(log, r, w, errors.Wrapf(err, "could not retrieve product #%s", item.GetProductId()), http.StatusInternalServerError)
 			return
 		}
-		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), currentCurrency(r))
+		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), fe.currentCurrency(r))
 		if err != nil {
 			renderHTTPError(log, r, w, errors.Wrapf(err, "could not convert currency for product #%s", item.GetProductId()), http.StatusInternalServerError)
 			return
@@ -234,8 +236,9 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	if err := templates.ExecuteTemplate(w, "cart", map[string]interface{}{
 		"session_id":       sessionID(r),
 		"request_id":       r.Context().Value(ctxKeyRequestID{}),
-		"user_currency":    currentCurrency(r),
+		"user_currency":    fe.currentCurrency(r),
 		"currencies":       currencies,
+		"store":            fe.store,
 		"recommendations":  recommendations,
 		"cart_size":        len(cart),
 		"shipping_cost":    shippingCost,
@@ -273,7 +276,7 @@ func (fe *frontendServer) placeOrderHandler(w http.ResponseWriter, r *http.Reque
 				CreditCardExpirationYear:  int32(ccYear),
 				CreditCardCvv:             int32(ccCVV)},
 			UserId:       sessionID(r),
-			UserCurrency: currentCurrency(r),
+			UserCurrency: fe.currentCurrency(r),
 			Address: &pb.Address{
 				StreetAddress: streetAddress,
 				City:          city,
@@ -298,7 +301,7 @@ func (fe *frontendServer) placeOrderHandler(w http.ResponseWriter, r *http.Reque
 	if err := templates.ExecuteTemplate(w, "order", map[string]interface{}{
 		"session_id":      sessionID(r),
 		"request_id":      r.Context().Value(ctxKeyRequestID{}),
-		"user_currency":   currentCurrency(r),
+		"user_currency":   fe.currentCurrency(r),
 		"order":           order.GetOrder(),
 		"total_paid":      &totalPaid,
 		"recommendations": recommendations,
@@ -322,7 +325,7 @@ func (fe *frontendServer) logoutHandler(w http.ResponseWriter, r *http.Request) 
 func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
 	log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
 	cur := r.FormValue("currency_code")
-	log.WithField("curr.new", cur).WithField("curr.old", currentCurrency(r)).
+	log.WithField("curr.new", cur).WithField("curr.old", fe.currentCurrency(r)).
 		Debug("setting currency")
 
 	if cur != "" {
@@ -340,6 +343,14 @@ func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusFound)
 }
 
+func (fe *frontendServer) currentCurrency(r *http.Request) string {
+	c, _ := r.Cookie(cookieCurrency)
+	if c != nil {
+		return c.Value
+	}
+	return fe.store.DefaultCurrency
+}
+
 func renderHTTPError(log logrus.FieldLogger, r *http.Request, w http.ResponseWriter, err error, code int) {
 	log.WithField("error", err).Error("request error")
 	errMsg := fmt.Sprintf("%+v", err)
@@ -351,14 +362,6 @@ func renderHTTPError(log logrus.FieldLogger, r *http.Request, w http.ResponseWri
 		"error":       errMsg,
 		"status_code": code,
 		"status":      http.StatusText(code)})
-}
-
-func currentCurrency(r *http.Request) string {
-	c, _ := r.Cookie(cookieCurrency)
-	if c != nil {
-		return c.Value
-	}
-	return defaultCurrency
 }
 
 func sessionID(r *http.Request) string {

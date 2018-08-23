@@ -16,7 +16,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -34,9 +36,8 @@ import (
 )
 
 const (
-	port            = "8080"
-	defaultCurrency = "USD"
-	cookieMaxAge    = 60 * 60 * 48
+	port         = "8080"
+	cookieMaxAge = 60 * 60 * 48
 
 	cookiePrefix    = "shop_"
 	cookieSessionID = cookiePrefix + "session-id"
@@ -54,6 +55,13 @@ var (
 )
 
 type ctxKeySessionID struct{}
+
+type store struct {
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	Lead            string `json:"lead"`
+	DefaultCurrency string `json:"default_currency"`
+}
 
 type frontendServer struct {
 	productCatalogSvcAddr string
@@ -73,6 +81,8 @@ type frontendServer struct {
 
 	shippingSvcAddr string
 	shippingSvcConn *grpc.ClientConn
+
+	store store
 }
 
 func main() {
@@ -90,6 +100,12 @@ func main() {
 	}
 	addr := os.Getenv("LISTEN_ADDR")
 	svc := new(frontendServer)
+
+	// Load the store info
+	var storeJsonPath string
+	mustMapEnv(&storeJsonPath, "STORE_JSON_PATH")
+	mustLoadStore(&svc.store, storeJsonPath)
+
 	mustMapEnv(&svc.productCatalogSvcAddr, "PRODUCT_CATALOG_SERVICE_ADDR")
 	mustMapEnv(&svc.currencySvcAddr, "CURRENCY_SERVICE_ADDR")
 	mustMapEnv(&svc.cartSvcAddr, "CART_SERVICE_ADDR")
@@ -176,6 +192,20 @@ func mustMapEnv(target *string, envKey string) {
 		panic(fmt.Sprintf("environment variable %q not set", envKey))
 	}
 	*target = v
+}
+
+func mustLoadStore(target *store, path string) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(errors.Wrapf(err, "could not open store json: %s", path))
+	}
+
+	fmt.Printf("File contents: %s", data)
+
+	err = json.Unmarshal(data, target)
+	if err != nil {
+		panic(errors.Wrapf(err, "could not parse store json: %s", path))
+	}
 }
 
 func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
