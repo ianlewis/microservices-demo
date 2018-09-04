@@ -1,0 +1,95 @@
+{
+    "products": [
+        {
+            "id": "OLJCESPC7Z",
+            "name": "Google Daruma Set",
+            "description": "This daruma set would look good in your living room.",
+            "picture": "/static/img/products/google/daruma.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 6700
+            }
+        },
+        {
+            "id": "66VCHSJNUP",
+            "name": "Google Sake",
+            "description": "You can't drink it.",
+            "picture": "/static/img/products/google/sake.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 1200
+            }
+        },
+        {
+            "id": "1YMWWN1N4O",
+            "name": "Daydream",
+            "description": "The best AR system.",
+            "picture": "/static/img/products/google/daydream.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 12400
+            }
+        },
+        {
+            "id": "L9ECAV7KIM",
+            "name": "Smartphone Beanbag",
+            "description": "Your smartphone can stay comfortable with this beanbag.",
+            "picture": "/static/img/products/google/beanbag.jpg",
+            "priceUsd": {
+                "currencyCode": "USD",
+                "units": 36,
+                "nanos": 450000000
+            }
+        },
+        {
+            "id": "2ZYFJ3GM2N",
+            "name": "Gbike",
+            "description": "Cruise the Google campus in style.",
+            "picture": "/static/img/products/google/gbike.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 2245
+            }
+        },
+        {
+            "id": "0PUK6V6EV0",
+            "name": "Android Figure",
+            "description": "A stylish Android action figure.",
+            "picture": "/static/img/products/google/figure.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 1200
+            }
+        },
+        {
+            "id": "LS4PSXUNUM",
+            "name": "Google Home",
+            "description": "Interact with the Google Assistant through your nice looking Google Home.",
+            "picture": "/static/img/products/google/home.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 12000
+            }
+        },
+        {
+            "id": "9SIQT8TOJO",
+            "name": "App Engine Plushy",
+            "description": "A knit plushy of the classic App Engine logo",
+            "picture": "/static/img/products/google/appengine.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 4789
+            }
+        },
+        {
+            "id": "6E92ZMYYFZ",
+            "name": "Noogler Beanie",
+            "description": "Be a new Googler with this stylish beanie.",
+            "picture": "/static/img/products/google/beanie.jpg",
+            "priceUsd": {
+                "currencyCode": "JPY",
+                "units": 1200
+            }
+        }
+    ]
+}

@@ -17,7 +17,7 @@ FROM alpine as release
 RUN apk add --no-cache ca-certificates
 WORKDIR /productcatalogservice
 COPY --from=builder /productcatalogservice ./server
-COPY products.json .
+COPY google_products.json ./products.json
 EXPOSE 3550
 ENTRYPOINT ["/productcatalogservice/server"]
 

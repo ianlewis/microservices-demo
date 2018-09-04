@@ -19,6 +19,6 @@ WORKDIR /frontend
 COPY --from=builder /go/bin/frontend /frontend/server
 COPY ./templates ./templates
 COPY ./static ./static
-COPY ./store.json ./store.json
+COPY ./google_store.json ./store.json
 EXPOSE 8080
 ENTRYPOINT ["/frontend/server"]
