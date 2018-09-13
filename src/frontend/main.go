@@ -19,10 +19,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"cloud.google.com/go/errorreporting"
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/gorilla/mux"
@@ -85,14 +87,26 @@ type frontendServer struct {
 	store store
 }
 
+type erWriter struct {
+	client *errorreporting.Client
+}
+
+func (w erWriter) Write(p []byte) (n int, err error) {
+	// fmt.Printf("write: %s", p)
+	w.client.Report(errorreporting.Entry{
+		Error: fmt.Errorf("error: %s", p),
+	})
+	return len(p), nil
+}
+
 func main() {
 	ctx := context.Background()
-	log := logrus.New()
-	log.Level = logrus.DebugLevel
-	log.Formatter = &logrus.TextFormatter{}
+	l := logrus.New()
+	l.Level = logrus.DebugLevel
+	l.Formatter = &logrus.TextFormatter{}
 
-	go initProfiling(log, "frontend", "1.0.0")
-	go initTracing(log)
+	go initProfiling(l, "frontend", "1.0.0")
+	go initTracing(l)
 
 	srvPort := port
 	if os.Getenv("PORT") != "" {
@@ -129,17 +143,36 @@ func main() {
 	r.HandleFunc("/setCurrency", svc.setCurrencyHandler).Methods(http.MethodPost)
 	r.HandleFunc("/logout", svc.logoutHandler).Methods(http.MethodGet)
 	r.HandleFunc("/cart/checkout", svc.placeOrderHandler).Methods(http.MethodPost)
+	r.HandleFunc("/panic", svc.panicHandler).Methods(http.MethodGet)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	var handler http.Handler = r
-	handler = &logHandler{log: log, next: handler} // add logging
-	handler = ensureSessionID(handler)             // add session ID
-	handler = &ochttp.Handler{                     // add opencensus instrumentation
+	handler = &logHandler{log: l, next: handler} // add logging
+	handler = ensureSessionID(handler)           // add session ID
+	handler = &ochttp.Handler{                   // add opencensus instrumentation
 		Handler:     handler,
 		Propagation: &b3.HTTPFormat{}}
 
-	log.Infof("starting server on " + addr + ":" + srvPort)
-	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
+	l.Infof("starting server on " + addr + ":" + srvPort)
+	erClient, err := errorreporting.NewClient(ctx, "next-tokyo-store-demo", errorreporting.Config{
+		ServiceName: "frontend",
+		OnError: func(err error) {
+			l.Printf("Could not log error: %v", err)
+		},
+	})
+	if err != nil {
+		panic(errors.Wrapf(err, "could not initialize error reporting"))
+	}
+	s := &http.Server{
+		Addr:    addr + ":" + srvPort,
+		Handler: handler,
+		ErrorLog: log.New(
+			erWriter{erClient},
+			"http: ",
+			log.Ldate|log.Ltime|log.Lshortfile,
+		),
+	}
+	log.Fatal(s.ListenAndServe())
 }
 
 func initTracing(log logrus.FieldLogger) {

@@ -5,6 +5,8 @@
   name = "cloud.google.com/go"
   packages = [
     "compute/metadata",
+    "errorreporting",
+    "errorreporting/apiv1beta1",
     "internal/version",
     "monitoring/apiv3",
     "profiler",
@@ -21,6 +23,15 @@
   ]
   revision = "37aa2801fbf0205003e15636096ebf0373510288"
   version = "v0.5.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/GoogleCloudPlatform/microservices-demo"
+  packages = [
+    "src/frontend/genproto",
+    "src/frontend/money"
+  ]
+  revision = "efef44c2d7cdcb102c354ad58194276ee9be6dde"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -212,6 +223,7 @@
     "googleapis/api/label",
     "googleapis/api/metric",
     "googleapis/api/monitoredres",
+    "googleapis/devtools/clouderrorreporting/v1beta1",
     "googleapis/devtools/cloudprofiler/v2",
     "googleapis/devtools/cloudtrace/v2",
     "googleapis/monitoring/v3",
@@ -258,6 +270,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "806889b149b944cab2216a1769d221df9ca18b3b62fb5040e40737fd0550084c"
+  inputs-digest = "b851f517b3666a9e4be74bc15af8b17f4f1a370e887516ba200695ace6bede10"
   solver-name = "gps-cdcl"
   solver-version = 1

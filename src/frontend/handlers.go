@@ -343,6 +343,10 @@ func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusFound)
 }
 
+func (fe *frontendServer) panicHandler(w http.ResponseWriter, r *http.Request) {
+	panic(errors.Wrapf(fmt.Errorf("Unknown error occurred"), "forced panic"))
+}
+
 func (fe *frontendServer) currentCurrency(r *http.Request) string {
 	c, _ := r.Cookie(cookieCurrency)
 	if c != nil {
