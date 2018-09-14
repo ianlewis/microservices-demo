@@ -22,6 +22,7 @@ import time
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError
 from google.api_core.exceptions import GoogleAPICallError
+from google.cloud import error_reporting
 import grpc
 
 import demo_pb2
@@ -107,6 +108,12 @@ class EmailService(demo_pb2_grpc.EmailServiceServicer):
 class DummyEmailService(demo_pb2_grpc.EmailServiceServicer):
   def SendOrderConfirmation(self, request, context):
     print('A request to send order confirmation email to {} has been received.'.format(request.email))
+
+    # Next Tokyo: create intentional error message when request email address is "next@tokyo.jp"
+    if request.email == "next@tokyo.jp":
+      client = error_reporting.Client()
+      client.report('This user is in the blacklist: {}'.format(request.email))
+
     return demo_pb2.Empty()
 
 def start(dummy_mode):
