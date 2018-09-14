@@ -15,21 +15,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"time"
 
+	"cloud.google.com/go/errorreporting"
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/trace"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/shippingservice/genproto"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -73,6 +75,25 @@ func (s *server) GetQuote(ctx context.Context, in *pb.GetQuoteRequest) (*pb.GetQ
 	count := 0
 	for _, item := range in.Items {
 		count += int(item.Quantity)
+	}
+
+	// Next Tokyo: cause intentional warning when then number of items are greater than 10.
+	if count > 10 {
+		// TODO(yoshifumi): other normal logs in info level are also recongized as "Error" in
+		// Stackdriver Logging. Fix it if we have time.
+		errorClient, err := errorreporting.NewClient(ctx, "next-tokyo-store-demo", errorreporting.Config{
+			ServiceName: "shippingservice",
+			OnError: func(err error) {
+				log.Printf("Could not log error: %v", err)
+			},
+		})
+		if err != nil {
+			panic(errors.Wrapf(err, "could not initialize error reporting"))
+		}
+		defer errorClient.Close()
+		errorClient.Report(errorreporting.Entry{
+			Error: fmt.Errorf("warn: the number of items is too large: %v", count),
+		})
 	}
 
 	// 2. Generate a quote based on the total number of items to be shipped.

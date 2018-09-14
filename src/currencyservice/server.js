@@ -20,8 +20,8 @@ require('@google-cloud/profiler').start({
       version: '1.0.0'
   }
 });
- require('@google-cloud/trace-agent').start();
- require('@google-cloud/debug-agent').start({
+require('@google-cloud/trace-agent').start();
+require('@google-cloud/debug-agent').start({
   serviceContext: {
     service: 'currencyservice',
     version: 'VERSION'
@@ -37,6 +37,7 @@ const PROTO_PATH = path.join(__dirname, './proto/demo.proto');
 const PORT = 7000;
 const DATA_URL = 'http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
 const shopProto = grpc.load(PROTO_PATH).hipstershop;
+const {ErrorReporting} = require('@google-cloud/error-reporting');
 
 /**
  * Helper function that gets currency data from an XML webpage
@@ -103,6 +104,17 @@ function convert (call, callback) {
 
       // Convert: from_currency --> EUR
       const from = request.from;
+
+      // Next Tokyo: cause intentional error when the currency is 'CAD'.
+      if (request.to_code == 'CAD') {
+        const errors = new ErrorReporting({
+          ignoreEnvironmentCheck: true
+        });
+        errors.report(new Error('CAD is not supported ini this shop!'), () => {
+          console.log('[convert] posted intentional error reporting.');
+        });
+      }
+
       const euros = _carry({
         units: from.units / data[from.currency_code],
         nanos: from.nanos / data[from.currency_code]
