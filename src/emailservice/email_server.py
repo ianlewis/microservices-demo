@@ -73,14 +73,14 @@ class EmailService(demo_pb2_grpc.EmailServiceServicer):
         "from": {
           "address_spec": from_address,
         },
-        "to": [{ 
-          "address_spec": email_address 
+        "to": [{
+          "address_spec": email_address
         }],
         "subject": "Your Confirmation Email",
         "html_body": content
       }
     )
-    
+
     print("Message sent: {}".format(response.rfc822_message_id))
 
   def SendOrderConfirmation(self, request, context):
@@ -109,10 +109,10 @@ class DummyEmailService(demo_pb2_grpc.EmailServiceServicer):
   def SendOrderConfirmation(self, request, context):
     print('A request to send order confirmation email to {} has been received.'.format(request.email))
 
-    # Next Tokyo: create intentional error message when request email address is "next@tokyo.jp"
-    if request.email == "next@tokyo.jp":
+    # Next Tokyo: create intentional error message when request email address is the default email address.
+    if request.email == "someone@example.com":
       client = error_reporting.Client()
-      client.report('This user is in the blacklist: {}'.format(request.email))
+      client.report('This user is using default email address: {}'.format(request.email))
 
     return demo_pb2.Empty()
 
