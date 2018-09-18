@@ -32,7 +32,7 @@ def index(l):
     l.client.get("/")
 
 def setCurrency(l):
-    currencies = ['EUR', 'USD', 'JPY', 'CAD']
+    currencies = ['EUR', 'USD', 'JPY']
     l.client.post("/setCurrency",
         {'currency_code': random.choice(currencies)})
 
@@ -47,12 +47,12 @@ def addToCart(l):
     l.client.get("/product/" + product)
     l.client.post("/cart", {
         'product_id': product,
-        'quantity': random.choice([1,2,3,4,5,10])})
+        'quantity': random.choice([1,2,3,5])})
 
 def checkout(l):
     addToCart(l)
     l.client.post("/cart/checkout", {
-        'email': 'someone@example.com',
+        'email': 'next@tokyo.jp',
         'street_address': '1600 Amphitheatre Parkway',
         'zip_code': '94043',
         'city': 'Mountain View',
@@ -78,5 +78,5 @@ class UserBehavior(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = UserBehavior
-    min_wait = 1000 * 60
-    max_wait = 10000 * 60
+    min_wait = 1000 * 10
+    max_wait = 1000 * 30
